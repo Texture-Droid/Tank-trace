@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tiger Tank Trace</title>
+
+<style>
+body {
+  margin: 0;
+  background: #171717;
+  color: white;
+  font-family: Arial, sans-serif;
+  text-align: center;
+}
+
+h2 { margin: 12px; }
+
+#cameraBox {
+  position: relative;
+  width: 100%;
+  height: 65vh;
+  overflow: hidden;
+  background: black;
+}
+
+#camera {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+#tank {
+  position: absolute;
+  width: 75%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0.5;
+  touch-action: none;
+  user-select: none;
+}
+
+.controls {
+  padding: 15px;
+}
+
+label {
+  display: block;
+  margin: 12px;
+}
+
+input {
+  width: 85%;
+}
+
+button {
+  padding: 12px 18px;
+  margin: 6px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>🐅 Tiger Tank Tracer</h2>
+
+<div id="cameraBox">
+  <video id="camera" autoplay playsinline></video>
+
+  <img
+    id="tank"
+    src="file_0000000059d081f5b2671b76a09ee69f.png"
+    draggable="false"
+  >
+</div>
+
+<div class="controls">
+
+  <label>
+    Image transparency
+    <input type="range" id="opacity"
+      min="0.05" max="1" step="0.05" value="0.5">
+  </label>
+
+  <label>
+    Tank size
+    <input type="range" id="size"
+      min="20" max="150" value="75">
+  </label>
+
+  <button onclick="startCamera('environment')">
+    Rear camera
+  </button>
+
+  <button onclick="startCamera('user')">
+    Front camera
+  </button>
+
+</div>
+
+<script>
+const video = document.getElementById("camera");
+const tank = document.getElementById("tank");
+
+let cameraStream;
+
+async function startCamera(mode) {
+  try {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+    }
+
+    cameraStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: mode },
+      audio: false
+    });
+
+    video.srcObject = cameraStream;
+  } catch (error) {
+    alert("Camera unavailable. Allow camera access and try again.");
+  }
+}
+
+document.getElementById("opacity").oninput = function() {
+  tank.style.opacity = this.value;
+};
+
+document.getElementById("size").oninput = function() {
+  tank.style.width = this.value + "%";
+};
+
+let dragging = false;
+let startX, startY, originalX, originalY;
+
+tank.addEventListener("pointerdown", function(e) {
+  dragging = true;
+  tank.setPointerCapture(e.pointerId);
+
+  startX = e.clientX;
+  startY = e.clientY;
+
+  const rect = tank.getBoundingClientRect();
+  originalX = rect.left + rect.width / 2;
+  originalY = rect.top + rect.height / 2;
+});
+
+tank.addEventListener("pointermove", function(e) {
+  if (!dragging) return;
+
+  const dx = e.clientX - startX;
+  const dy = e.clientY - startY;
+
+  tank.style.left = (originalX + dx) + "px";
+  tank.style.top = (originalY + dy) + "px";
+  tank.style.transform = "translate(-50%, -50%)";
+});
+
+tank.addEventListener("pointerup", function() {
+  dragging = false;
+});
+
+tank.addEventListener("pointercancel", function() {
+  dragging = false;
+});
+
+startCamera("environment");
+</script>
+
+</body>
+</html>
